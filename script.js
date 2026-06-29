@@ -1,6 +1,9 @@
-const board = document.querySelector('.board');
-const btn = document.querySelector("#restartButton");
-const p = document.querySelector("#winningMessage");
+const board = document.querySelector(".board");
+const restartButton = document.querySelector("#restartButton");
+const winningMessage = document.querySelector("#winningMessage");
+
+let turn = "O";
+let gameOver = false;
 
 const winningCombinations = [
     [0, 1, 2],
@@ -15,78 +18,64 @@ const winningCombinations = [
     [2, 4, 6]
 ];
 
-let boardArr = new Array(9).fill("E");
-let gameFinish = false;
-function winningCondition() {
-    for (const [a,b,c] of winningCombinations) {
-        if (boardArr[a] !== "E" && boardArr[a] === boardArr[b] && boardArr[a] === boardArr[c]) {
-            gameFinish = true;
-            return 1;
+let gameState = new Array(9).fill("E");
+
+function checkWinner() {
+    for (let [a, b, c] of winningCombinations) {
+        if (
+            gameState[a] !== "E" &&
+            gameState[a] === gameState[b] &&
+            gameState[b] === gameState[c]
+        ) {
+            return gameState[a];
         }
     }
-    return 0;
+
+    return null;
 }
 
-function drawCondition() {
-    if (!boardArr.includes("E")) {
-        gameFinish = true;
-        return 1;
+function checkDraw() {
+    return !gameState.includes("E");
+}
+
+board.addEventListener("click", (e) => {
+    if (gameOver) return;
+
+    if (!e.target.classList.contains("cell")) return;
+
+    const cell = e.target;
+    const index = Number(cell.id);
+
+    if (gameState[index] !== "E") return;
+
+    gameState[index] = turn;
+    cell.textContent = turn;
+
+    const winner = checkWinner();
+
+    if (winner) {
+        winningMessage.textContent = `${winner} Wins! 🎉`;
+        gameOver = true;
+        return;
     }
-}
 
-let turn = "O";
+    if (checkDraw()) {
+        winningMessage.textContent = "It's a Draw!";
+        gameOver = true;
+        return;
+    }
 
-const removeAll = ()=>{
-    boardArr = new Array(9).fill("E");
+    turn = turn === "O" ? "X" : "O";
+});
+
+restartButton.addEventListener("click", () => {
+    gameState = new Array(9).fill("E");
     turn = "O";
-    p.textContent = "";
-    gameFinish = false;
-    const arr = [...board.children];
-    arr.forEach(cell=>{
+    gameOver = false;
+
+    document.querySelectorAll(".cell").forEach(cell => {
         cell.textContent = "";
-    })
-    
-}
+    });
 
-board.addEventListener('click',(e)=>{
-
-    
-    if (e.target.className === "cell") {
-        if (gameFinish || e.target.textContent !== "") {
-            return;
-        }
-        if (turn === "O") {
-            e.target.textContent = turn;
-            let index = e.target.id;
-            boardArr[index] = turn;
-            turn = "X";
-            if (winningCondition()) {
-                p.textContent = "O won";
-            }
-            else if (drawCondition()) {
-                p.textContent = "Draw";
-                setTimeout(() => {
-                    removeAll();
-                }, 2000);
-            }
-        } else{
-            e.target.textContent = turn;
-            let index = e.target.id;
-            boardArr[index] = turn;
-            turn = "O";
-            if (winningCondition()) {
-                p.textContent = "X won";
-            }
-            else if (drawCondition()) {
-                p.textContent = "Draw";
-                setTimeout(() => {
-                    removeAll();
-                }, 2000);
-            }
-        }
-    }
-})
-
-
-
-btn.addEventListener('click',removeAll)
+    winningMessage.textContent = "";
+});
